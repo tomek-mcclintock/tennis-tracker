@@ -1,3 +1,5 @@
+"use client"
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@clerk/nextjs';
 import { Card, CardContent } from "@/components/ui/card";
