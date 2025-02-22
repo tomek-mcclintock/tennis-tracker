@@ -1,14 +1,19 @@
 // middleware.ts
-import { authMiddleware } from "@clerk/nextjs/server";
- 
-export default authMiddleware({
-  // Routes that can be accessed while signed out
-  publicRoutes: ["/"],
-  // Routes that can always be accessed, and have
-  // no authentication information
-  ignoredRoutes: ["/api/public"]
+import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
+
+// Create matchers for your public routes
+const isPublicRoute = createRouteMatcher([
+  '/', 
+  '/sign-in*', 
+  '/sign-up*'
+]);
+
+export default clerkMiddleware((auth, req, evt) => {
+  if (isPublicRoute(req)) {
+    return;
+  }
 });
- 
+
 export const config = {
-  matcher: ["/((?!.+\\.[\\w]+$|_next).*)", "/", "/(api|trpc)(.*)"],
+  matcher: ['/((?!.+\\.[\\w]+$|_next).*)', '/', '/(api|trpc)(.*)'],
 };
