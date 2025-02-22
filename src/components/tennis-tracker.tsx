@@ -1,4 +1,3 @@
-// src/components/tennis-tracker.tsx
 "use client"
 
 import React, { useState, useEffect } from 'react';
@@ -95,10 +94,10 @@ const TennisTracker = () => {
       id: Date.now().toString(),
       text: newNote,
       date: new Date().toISOString(),
-      category: 'toWorkOn',
+      category: 'toWorkOn' as 'currentFocus' | 'toWorkOn' | 'mastered',
       shot_category: activeShot,
       shot_type: activeShotType,
-      user_id: userId
+      user_id: userId || ''
     };
 
     if (isSignedIn && userId) {
@@ -146,7 +145,7 @@ const TennisTracker = () => {
     }
 
     updatedNotes[key][from] = updatedNotes[key][from].filter(n => n.id !== noteId);
-    updatedNotes[key][to] = [...updatedNotes[key][to], { ...noteToMove, category: to }];
+    updatedNotes[key][to] = [...updatedNotes[key][to], { ...noteToMove, category: to as 'currentFocus' | 'toWorkOn' | 'mastered' }];
     
     await saveNotes(updatedNotes);
   };
@@ -201,95 +200,97 @@ const TennisTracker = () => {
   };
 
   const renderNote = (note: Note, category: string) => (
-    <div key={note.id} className="bg-card border rounded-lg mb-3 overflow-hidden">
-      {editingNote === note.id ? (
-        <div className="p-3 space-y-2">
-          <Textarea
-            value={editText}
-            onChange={(e) => setEditText(e.target.value)}
-            className="min-h-[100px]"
-          />
-          <div className="flex gap-2 justify-end">
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => setEditingNote(null)}
-              className="h-8 w-8 p-0"
-            >
-              <X className="h-4 w-4" />
-            </Button>
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => saveEdit(note.id, category)}
-              className="h-8 w-8 p-0"
-            >
-              <Check className="h-4 w-4" />
-            </Button>
+    <Card key={note.id} className="mb-3 overflow-hidden">
+      <CardContent className="p-0">
+        {editingNote === note.id ? (
+          <div className="p-3 space-y-2">
+            <Textarea
+              value={editText}
+              onChange={(e) => setEditText(e.target.value)}
+              className="min-h-[100px]"
+            />
+            <div className="flex gap-2 justify-end">
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => setEditingNote(null)}
+                className="h-8 w-8 p-0"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => saveEdit(note.id, category)}
+                className="h-8 w-8 p-0"
+              >
+                <Check className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
-        </div>
-      ) : (
-        <>
-          <div className="p-3 border-b">
-            <p className="text-sm leading-relaxed">{note.text}</p>
-            <span className="text-xs text-muted-foreground mt-1 block">
-              {new Date(note.date).toLocaleDateString()}
-            </span>
-          </div>
-          <div className="flex items-center justify-end gap-1 p-2 bg-muted/30">
-            <Button 
-              variant="ghost" 
-              size="sm"
-              onClick={() => {
-                setEditingNote(note.id);
-                setEditText(note.text);
-              }}
-              className="h-8 w-8 p-0"
-            >
-              <Pencil className="h-4 w-4" />
-            </Button>
-            <Button 
-              variant="ghost" 
-              size="sm"
-              onClick={() => deleteNote(note.id, category)}
-              className="h-8 w-8 p-0"
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-            {category === 'toWorkOn' && (
+        ) : (
+          <>
+            <div className="p-3 border-b">
+              <p className="text-sm leading-relaxed">{note.text}</p>
+              <span className="text-xs text-muted-foreground mt-1 block">
+                {new Date(note.date).toLocaleDateString()}
+              </span>
+            </div>
+            <div className="flex items-center justify-end gap-1 p-2 bg-muted/30">
               <Button 
                 variant="ghost" 
                 size="sm"
-                onClick={() => moveNote(note.id, 'toWorkOn', 'currentFocus')}
-                className="h-8 px-3"
+                onClick={() => {
+                  setEditingNote(note.id);
+                  setEditText(note.text);
+                }}
+                className="h-8 w-8 p-0"
               >
-                Focus <ChevronRight className="h-4 w-4 ml-1" />
+                <Pencil className="h-4 w-4" />
               </Button>
-            )}
-            {category === 'currentFocus' && (
               <Button 
                 variant="ghost" 
                 size="sm"
-                onClick={() => moveNote(note.id, 'currentFocus', 'mastered')}
-                className="h-8 px-3"
+                onClick={() => deleteNote(note.id, category)}
+                className="h-8 w-8 p-0"
               >
-                Master <ChevronRight className="h-4 w-4 ml-1" />
+                <Trash2 className="h-4 w-4" />
               </Button>
-            )}
-            {category === 'mastered' && (
-              <Button 
-                variant="ghost" 
-                size="sm"
-                onClick={() => moveNote(note.id, 'mastered', 'toWorkOn')}
-                className="h-8 px-3"
-              >
-                Revise <ChevronRight className="h-4 w-4 ml-1" />
-              </Button>
-            )}
-          </div>
-        </>
-      )}
-    </div>
+              {category === 'toWorkOn' && (
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={() => moveNote(note.id, 'toWorkOn', 'currentFocus')}
+                  className="h-8 px-3"
+                >
+                  Focus <ChevronRight className="h-4 w-4 ml-1" />
+                </Button>
+              )}
+              {category === 'currentFocus' && (
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={() => moveNote(note.id, 'currentFocus', 'mastered')}
+                  className="h-8 px-3"
+                >
+                  Master <ChevronRight className="h-4 w-4 ml-1" />
+                </Button>
+              )}
+              {category === 'mastered' && (
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={() => moveNote(note.id, 'mastered', 'toWorkOn')}
+                  className="h-8 px-3"
+                >
+                  Revise <ChevronRight className="h-4 w-4 ml-1" />
+                </Button>
+              )}
+            </div>
+          </>
+        )}
+      </CardContent>
+    </Card>
   );
 
   if (isLoading) {
@@ -312,25 +313,28 @@ const TennisTracker = () => {
                 </TabsTrigger>
               ))}
             </TabsList>
-          </Tabs>
-
-          <Tabs value={activeShotType} onValueChange={setActiveShotType} className="w-full">
-            <TabsList className="w-full h-auto flex mb-2 bg-muted/50 p-1 gap-1">
-              {SHOT_STRUCTURE[activeShot].types.map(type => (
-                <TabsTrigger 
-                  key={type} 
-                  value={type}
-                  className="flex-1 py-2"
-                >
-                  {type}
-                </TabsTrigger>
-              ))}
-            </TabsList>
+            {Object.entries(SHOT_STRUCTURE).map(([key, { types }]) => (
+              <TabsContent key={key} value={key}>
+                <Tabs value={activeShotType} onValueChange={setActiveShotType} className="w-full">
+                  <TabsList className="w-full h-auto flex mb-2 bg-muted/50 p-1 gap-1">
+                    {types.map(type => (
+                      <TabsTrigger 
+                        key={type} 
+                        value={type}
+                        className="flex-1 py-2"
+                      >
+                        {type}
+                      </TabsTrigger>
+                    ))}
+                  </TabsList>
+                </Tabs>
+              </TabsContent>
+            ))}
           </Tabs>
 
           <div className="space-y-6">
-            <div className="rounded-lg border bg-card">
-              <div className="p-4">
+            <Card>
+              <CardContent className="p-4">
                 <Textarea
                   placeholder="Add a new note..."
                   value={newNote}
@@ -343,8 +347,8 @@ const TennisTracker = () => {
                 >
                   Add Note
                 </Button>
-              </div>
-            </div>
+              </CardContent>
+            </Card>
 
             <div className="space-y-6">
               {['currentFocus', 'toWorkOn', 'mastered'].map(category => (
@@ -369,6 +373,4 @@ const TennisTracker = () => {
   );
 };
 
-export default TennisTracker;
-
-export { TennisTracker }; // Add this line at the end
+export { TennisTracker };

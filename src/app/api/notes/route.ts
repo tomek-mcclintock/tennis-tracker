@@ -4,7 +4,8 @@ import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import { Note } from '@/lib/types';
 
-export async function GET(_request: Request) {  // Add underscore to indicate unused param
+// Remove the request parameter since we're not using it
+export async function GET() {
   const supabase = createRouteHandlerClient({ cookies });
   
   try {
@@ -42,7 +43,7 @@ export async function POST(request: Request) {
     
     const { error } = await supabase
       .from('notes')
-      .upsert(notes.map((note: Note) => ({  // Use Note type instead of any
+      .upsert(notes.map((note: Note) => ({
         ...note,
         user_id: session.user.id
       })));
