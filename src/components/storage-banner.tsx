@@ -1,6 +1,7 @@
 // src/components/storage-banner.tsx
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@clerk/nextjs";
+import Link from "next/link";
 
 export const StorageBanner = () => {
   const { isSignedIn } = useAuth();
@@ -14,7 +15,7 @@ export const StorageBanner = () => {
           Your notes are stored locally. Sign in to access them from any device.
         </p>
         <Button variant="outline" size="sm" asChild>
-          <a href="/sign-in">Sign In</a>
+          <Link href="/sign-in">Sign In</Link>
         </Button>
       </div>
     </div>
