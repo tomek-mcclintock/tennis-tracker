@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '@clerk/nextjs';
+import { useAuth, SignOutButton } from '@clerk/nextjs';
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -90,50 +90,70 @@ const TennisTracker = () => {
     if (!newNote.trim()) return;
 
     const key = `${activeShot}-${activeShotType}`;
-    const noteData: Note = {
-      id: Date.now().toString(),
+    const noteData = {
       text: newNote,
       date: new Date().toISOString(),
-      category: 'toWorkOn',
+      category: 'toWorkOn' as const,
       shot_category: activeShot,
       shot_type: activeShotType,
       user_id: userId || ''
     };
 
     if (isSignedIn && userId) {
-      const { error } = await supabase
-        .from('notes')
-        .insert([noteData]);
+      try {
+        const { data, error } = await supabase
+          .from('notes')
+          .insert([noteData])
+          .select()
+          .single();
 
-      if (error) {
-        console.error('Error saving note:', error);
-        return;
+        if (error) {
+          console.error('Error saving note:', error);
+          return;
+        }
+
+        const updatedNotes = { ...notes };
+        if (!updatedNotes[key]) {
+          updatedNotes[key] = {
+            currentFocus: [],
+            toWorkOn: [],
+            mastered: []
+          };
+        }
+        updatedNotes[key].toWorkOn.push(data);
+        await saveNotes(updatedNotes);
+        setNewNote('');
+      } catch (error) {
+        console.error('Error:', error);
       }
-    }
-
-    const updatedNotes = { ...notes };
-    if (!updatedNotes[key]) {
-      updatedNotes[key] = {
-        currentFocus: [],
-        toWorkOn: [],
-        mastered: []
+    } else {
+      const localNoteData = {
+        ...noteData,
+        id: crypto.randomUUID()
       };
+
+      const updatedNotes = { ...notes };
+      if (!updatedNotes[key]) {
+        updatedNotes[key] = {
+          currentFocus: [],
+          toWorkOn: [],
+          mastered: []
+        };
+      }
+      updatedNotes[key].toWorkOn.push(localNoteData);
+      await saveNotes(updatedNotes);
+      setNewNote('');
     }
-    updatedNotes[key].toWorkOn.push(noteData);
-    
-    await saveNotes(updatedNotes);
-    setNewNote('');
   };
 
   const moveNote = async (noteId: string, from: NoteCategory, to: NoteCategory) => {
     const key = `${activeShot}-${activeShotType}`;
-    const updatedNotes = { ...notes };
     
-    if (!updatedNotes[key]) {
+    if (!notes[key]) {
       return;
     }
 
-    const noteToMove = updatedNotes[key][from].find(n => n.id === noteId);
+    const noteToMove = notes[key][from].find(n => n.id === noteId);
     
     if (!noteToMove) return;
 
@@ -149,6 +169,7 @@ const TennisTracker = () => {
       }
     }
 
+    const updatedNotes = { ...notes };
     updatedNotes[key][from] = updatedNotes[key][from].filter(n => n.id !== noteId);
     updatedNotes[key][to] = [...updatedNotes[key][to], { ...noteToMove, category: to }];
     
@@ -313,6 +334,13 @@ const TennisTracker = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      {isSignedIn && (
+        <div className="container max-w-2xl mx-auto px-4 py-4 flex justify-end">
+          <Button variant="outline" size="sm" asChild>
+            <SignOutButton />
+          </Button>
+        </div>
+      )}
       <div className="container max-w-2xl mx-auto px-4 py-6">
         <div className="space-y-4">
           <Tabs value={activeShot} onValueChange={setActiveShot} className="w-full">
