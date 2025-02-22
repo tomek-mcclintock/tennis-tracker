@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Pencil, Trash2, X, Check, ChevronRight } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
-import { NotesState, Note } from '@/lib/types';
+import { NotesState, Note, NoteCategory } from '@/lib/types';
 
 const SHOT_STRUCTURE = {
   forehand: {
@@ -23,7 +23,7 @@ const SHOT_STRUCTURE = {
     name: 'Serve',
     types: ['Flat', 'Slice', 'Kick', 'Second']
   }
-};
+} as const;
 
 const TennisTracker = () => {
   const { isSignedIn, userId } = useAuth();
@@ -90,11 +90,11 @@ const TennisTracker = () => {
     if (!newNote.trim()) return;
 
     const key = `${activeShot}-${activeShotType}`;
-    const noteData = {
+    const noteData: Note = {
       id: Date.now().toString(),
       text: newNote,
       date: new Date().toISOString(),
-      category: 'toWorkOn' as 'currentFocus' | 'toWorkOn' | 'mastered',
+      category: 'toWorkOn',
       shot_category: activeShot,
       shot_type: activeShotType,
       user_id: userId || ''
@@ -125,9 +125,14 @@ const TennisTracker = () => {
     setNewNote('');
   };
 
-  const moveNote = async (noteId: string, from: string, to: string) => {
+  const moveNote = async (noteId: string, from: NoteCategory, to: NoteCategory) => {
     const key = `${activeShot}-${activeShotType}`;
     const updatedNotes = { ...notes };
+    
+    if (!updatedNotes[key]) {
+      return;
+    }
+
     const noteToMove = updatedNotes[key][from].find(n => n.id === noteId);
     
     if (!noteToMove) return;
@@ -145,14 +150,18 @@ const TennisTracker = () => {
     }
 
     updatedNotes[key][from] = updatedNotes[key][from].filter(n => n.id !== noteId);
-    updatedNotes[key][to] = [...updatedNotes[key][to], { ...noteToMove, category: to as 'currentFocus' | 'toWorkOn' | 'mastered' }];
+    updatedNotes[key][to] = [...updatedNotes[key][to], { ...noteToMove, category: to }];
     
     await saveNotes(updatedNotes);
   };
 
-  const deleteNote = async (noteId: string, category: string) => {
+  const deleteNote = async (noteId: string, category: NoteCategory) => {
     const key = `${activeShot}-${activeShotType}`;
     
+    if (!notes[key]) {
+      return;
+    }
+
     if (isSignedIn && userId) {
       const { error } = await supabase
         .from('notes')
@@ -170,8 +179,13 @@ const TennisTracker = () => {
     await saveNotes(updatedNotes);
   };
 
-  const saveEdit = async (noteId: string, category: string) => {
+  const saveEdit = async (noteId: string, category: NoteCategory) => {
     const key = `${activeShot}-${activeShotType}`;
+    
+    if (!notes[key]) {
+      return;
+    }
+
     const updatedNotes = { ...notes };
     const noteIndex = updatedNotes[key][category].findIndex(n => n.id === noteId);
     
@@ -199,7 +213,7 @@ const TennisTracker = () => {
     setEditText('');
   };
 
-  const renderNote = (note: Note, category: string) => (
+  const renderNote = (note: Note, category: NoteCategory) => (
     <Card key={note.id} className="mb-3 overflow-hidden">
       <CardContent className="p-0">
         {editingNote === note.id ? (
@@ -351,7 +365,7 @@ const TennisTracker = () => {
             </Card>
 
             <div className="space-y-6">
-              {['currentFocus', 'toWorkOn', 'mastered'].map(category => (
+              {(['currentFocus', 'toWorkOn', 'mastered'] as const).map(category => (
                 <div key={category}>
                   <h3 className="text-lg font-semibold mb-3 px-1">
                     {category === 'currentFocus' ? 'Current Focus' : 
