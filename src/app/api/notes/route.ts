@@ -1,8 +1,10 @@
+// src/app/api/notes/route.ts
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
+import { Note } from '@/lib/types';
 
-export async function GET(request: Request) {
+export async function GET(_request: Request) {  // Add underscore to indicate unused param
   const supabase = createRouteHandlerClient({ cookies });
   
   try {
@@ -40,7 +42,7 @@ export async function POST(request: Request) {
     
     const { error } = await supabase
       .from('notes')
-      .upsert(notes.map((note: any) => ({
+      .upsert(notes.map((note: Note) => ({  // Use Note type instead of any
         ...note,
         user_id: session.user.id
       })));

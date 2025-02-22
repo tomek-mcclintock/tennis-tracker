@@ -1,3 +1,4 @@
+// src/components/tennis-tracker.tsx
 "use client"
 
 import React, { useState, useEffect } from 'react';
@@ -369,3 +370,5 @@ const TennisTracker = () => {
 };
 
 export default TennisTracker;
+
+export { TennisTracker }; // Add this line at the end
