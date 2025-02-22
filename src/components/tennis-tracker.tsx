@@ -43,10 +43,14 @@ const TennisTracker = () => {
           const { data, error } = await supabase
             .from('notes')
             .select('*')
-            .eq('user_id', userId);
-
-          if (error) throw error;
-
+            .eq('user_id', userId)
+            .order('date', { ascending: false });
+  
+          if (error) {
+            console.error('Error fetching notes:', error);
+            return;
+          }
+  
           const transformedNotes: NotesState = {};
           data.forEach((note: Note) => {
             const key = `${note.shot_category}-${note.shot_type}`;
@@ -59,7 +63,7 @@ const TennisTracker = () => {
             }
             transformedNotes[key][note.category].push(note);
           });
-
+  
           setNotes(transformedNotes);
         } else {
           const localNotes = localStorage.getItem('tennis-notes');
@@ -73,9 +77,11 @@ const TennisTracker = () => {
         setIsLoading(false);
       }
     };
-
+  
     loadNotes();
   }, [isSignedIn, userId]);
+  
+
 
   const saveNotes = async (newNotes: NotesState) => {
     if (isSignedIn && userId) {
@@ -88,7 +94,7 @@ const TennisTracker = () => {
 
   const addNote = async () => {
     if (!newNote.trim()) return;
-
+  
     const key = `${activeShot}-${activeShotType}`;
     const noteData = {
       text: newNote,
@@ -96,22 +102,21 @@ const TennisTracker = () => {
       category: 'toWorkOn' as const,
       shot_category: activeShot,
       shot_type: activeShotType,
-      user_id: userId || ''
+      user_id: userId || 'local' // Provide a default value for local storage
     };
-
+  
     if (isSignedIn && userId) {
       try {
         const { data, error } = await supabase
           .from('notes')
           .insert([noteData])
-          .select()
-          .single();
-
+          .select();
+  
         if (error) {
           console.error('Error saving note:', error);
           return;
         }
-
+  
         const updatedNotes = { ...notes };
         if (!updatedNotes[key]) {
           updatedNotes[key] = {
@@ -120,18 +125,25 @@ const TennisTracker = () => {
             mastered: []
           };
         }
-        updatedNotes[key].toWorkOn.push(data);
+        if (data && data[0]) {
+          updatedNotes[key].toWorkOn.push(data[0]);
+        }
         await saveNotes(updatedNotes);
         setNewNote('');
       } catch (error) {
         console.error('Error:', error);
       }
     } else {
-      const localNoteData = {
-        ...noteData,
-        id: crypto.randomUUID()
+      const localNoteData: Note = {  // Explicitly type as Note
+        id: crypto.randomUUID(),
+        text: newNote,
+        date: new Date().toISOString(),
+        category: 'toWorkOn',
+        shot_category: activeShot,
+        shot_type: activeShotType,
+        user_id: 'local'  // Use a constant string for local storage
       };
-
+  
       const updatedNotes = { ...notes };
       if (!updatedNotes[key]) {
         updatedNotes[key] = {
@@ -145,6 +157,7 @@ const TennisTracker = () => {
       setNewNote('');
     }
   };
+  
 
   const moveNote = async (noteId: string, from: NoteCategory, to: NoteCategory) => {
     const key = `${activeShot}-${activeShotType}`;
