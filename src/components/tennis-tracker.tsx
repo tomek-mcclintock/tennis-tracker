@@ -277,14 +277,8 @@ const TennisTracker = () => {
             </div>
           </div>
         ) : (
-          <>
-            <div className="p-3 border-b">
-              <p className="text-sm leading-relaxed">{note.text}</p>
-              <span className="text-xs text-muted-foreground mt-1 block">
-                {new Date(note.date).toLocaleDateString()}
-              </span>
-            </div>
-            <div className="flex items-center justify-end gap-1 p-2 bg-muted/30">
+          <div className="relative">
+            <div className="absolute top-2 right-2 flex items-center gap-1">
               <Button 
                 variant="ghost" 
                 size="sm"
@@ -292,26 +286,26 @@ const TennisTracker = () => {
                   setEditingNote(note.id);
                   setEditText(note.text);
                 }}
-                className="h-8 w-8 p-0"
+                className="h-7 w-7 p-0"
               >
-                <Pencil className="h-4 w-4" />
+                <Pencil className="h-3 w-3" />
               </Button>
               <Button 
                 variant="ghost" 
                 size="sm"
                 onClick={() => deleteNote(note.id, category)}
-                className="h-8 w-8 p-0"
+                className="h-7 w-7 p-0"
               >
-                <Trash2 className="h-4 w-4" />
+                <Trash2 className="h-3 w-3" />
               </Button>
               {category === 'toWorkOn' && (
                 <Button 
                   variant="ghost" 
                   size="sm"
                   onClick={() => moveNote(note.id, 'toWorkOn', 'currentFocus')}
-                  className="h-8 px-3"
+                  className="h-7 px-2 text-xs"
                 >
-                  Focus <ChevronRight className="h-4 w-4 ml-1" />
+                  Focus <ChevronRight className="h-3 w-3 ml-1" />
                 </Button>
               )}
               {category === 'currentFocus' && (
@@ -319,9 +313,9 @@ const TennisTracker = () => {
                   variant="ghost" 
                   size="sm"
                   onClick={() => moveNote(note.id, 'currentFocus', 'mastered')}
-                  className="h-8 px-3"
+                  className="h-7 px-2 text-xs"
                 >
-                  Master <ChevronRight className="h-4 w-4 ml-1" />
+                  Master <ChevronRight className="h-3 w-3 ml-1" />
                 </Button>
               )}
               {category === 'mastered' && (
@@ -329,13 +323,19 @@ const TennisTracker = () => {
                   variant="ghost" 
                   size="sm"
                   onClick={() => moveNote(note.id, 'mastered', 'toWorkOn')}
-                  className="h-8 px-3"
+                  className="h-7 px-2 text-xs"
                 >
-                  Revise <ChevronRight className="h-4 w-4 ml-1" />
+                  Revise <ChevronRight className="h-3 w-3 ml-1" />
                 </Button>
               )}
             </div>
-          </>
+            <div className="p-3 pr-24"> {/* Add right padding to prevent text from going under buttons */}
+              <p className="text-sm leading-relaxed">{note.text}</p>
+              <span className="text-xs text-muted-foreground mt-1 block">
+                {new Date(note.date).toLocaleDateString()}
+              </span>
+            </div>
+          </div>
         )}
       </CardContent>
     </Card>
